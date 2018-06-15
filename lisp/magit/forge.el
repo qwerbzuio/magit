@@ -88,83 +88,80 @@ ID, and vice-versa."
 \\(\\([^:/]+\\)/\\([^/]+?\\)\\)\
 \\(?:\\.git\\)?\\'")
 
-(cl-defmethod magit-forge-get-project ((demand symbol))
-  "Return the project object for the current repository if any.
+(defun magit-forge--project-remote ())
+
+(cl-defgeneric magit-forge-get-project ()
+  "Return a project object or nil.
 
 If DEMAND is nil and the project of the current repository cannot
 be determined or the corresponding object does not exist in the
 forge database, then return nil.
 
 If DEMAND is non-nil and the project object does not exist in the
-forge database yet, then create, insert and return the object.
-Doing so involves an API call.  If the required information
-cannot be determined, then raise an error."
-  (progn
-    (cl-block get-project
-      (cl-flet ((return (msg &rest args)
-                        (if demand
-                            (error "Cannot determine forge project. %s"
-                                   (format msg args))
-                          (cl-return-from get-project nil))))
-        (let ((host    (magit-get "forge.host"))
-              (project (magit-get "forge.project"))
-              (remote  (or (magit-get "forge.remote")
-                           (let ((remotes (magit-list-remotes)))
-                             (cond ((and (not (cdr remotes)) (car remotes)))
-                                   ((member "origin" remotes) "origin")))))
-              owner name spec)
-          (cond
-           ((and host project)
-            (if (string-match "\\`\\([^/]+\\)/\\([^/]\\)\\'" project)
-                (progn (setq owner (match-string 1 project))
-                       (setq name  (match-string 2 project))
-                       (setq spec  (car (cl-member host magit-forge-alist
-                                                   :key #'cadr :test #'equal))))
-              (return "Invalid forge.project: %s" project)))
-           ((or host project)
-            (return "Specify both `forge.host' and `forge.project' or neither"))
-           (t
-            (unless remote
-              (if (magit-list-remotes)
-                  (return "Cannot decide on remote to use")
-                (return "No remote or explicit configuration")))
-            (let ((url (magit-git-string "remote" "get-url" remote)))
-              (unless url
-                (return "No url configured for %s" remote))
-              (if (string-match magit--forge-url-regexp url)
-                  (progn (setq host  (match-string 1 url))
-                         (setq owner (match-string 3 url))
-                         (setq name  (match-string 4 url))
-                         (setq spec  (assoc host magit-forge-alist)))
-                (return "Cannot parse %s's url: %s" remote url)))))
-          (unless spec
-            (return "%S doesn't match any entry in `magit-forge-alist'" host))
-          (pcase-let* ((`(,githost ,apihost ,forge ,class) spec)
-                       (db (magit-db))
-                       (row (car (emacsql db [:select * :from project
-                                              :where (and (= forge $s1)
-                                                          (= owner $s2)
-                                                          (= name  $s3))]
-                                          forge owner name))))
-            (cond (row
-                   (let ((prj (closql--remake-instance class db row t)))
-                     (oset prj apihost apihost)
-                     (oset prj githost githost)
-                     (oset prj remote  remote)
-                     prj))
-                  (demand
-                   (let ((id (magit-forge--object-id
-                              class forge apihost owner name)))
-                     (unless id
-                       (return "Failed to retrieve project id"))
-                     (closql-insert db (funcall class
-                                                :id      id
-                                                :forge   forge
-                                                :owner   owner
-                                                :name    name
-                                                :apihost apihost
-                                                :githost githost
-                                                :remote  remote)))))))))))
+forge database yet, then create and return the object.  Doing so
+involves an API call.  If the required information cannot be
+determined, then raise an error.")
+
+(cl-defmethod magit-forge-get-project ((demand symbol))
+  "Return the project for the current repository if any."
+  (magit--with-refresh-cache
+      (list default-directory 'magit-forge-get-project demand)
+    (let* ((remotes (magit-list-remotes))
+           (remote  (or (magit-get "forge.remote")
+                        (cond ((and (not (cdr remotes)) (car remotes)))
+                              ((member "origin" remotes) "origin")))))
+      (if-let (url (or (magit-get "forge.project")
+                       (and remote
+                            (magit-git-string "remote" "get-url" remote))))
+          (magit-forge-get-project url remote demand)
+        (when demand
+          (error "Cannot determine forge project.  %s"
+                 (cond (remote  (format "No url configured for %s" remote))
+                       (remotes "Cannot decide on remote to use")
+                       (t       "No remote or explicit configuration"))))))))
+
+(cl-defmethod magit-forge-get-project ((url string) &optional remote demand)
+  "Return the project at URL."
+  (if (string-match magit--forge-url-regexp url)
+      (magit-forge-get-project (list (match-string 1 url)
+                                     (match-string 3 url)
+                                     (match-string 4 url))
+                               remote demand)
+    (when demand
+      (error "Cannot determine forge project.  Cannot parse %s" url))))
+
+(cl-defmethod magit-forge-get-project (((host owner name) list)
+                                       &optional remote demand)
+  "Return the project identified by HOST, OWNER and NAME."
+  (if-let (spec (assoc host magit-forge-alist))
+      (pcase-let ((`(,githost ,apihost ,forge ,class) spec))
+        (if-let (row (car (magit-sql [:select * :from project
+                                      :where (and (= forge $s1)
+                                                  (= owner $s2)
+                                                  (= name  $s3))]
+                                     forge owner name)))
+            (let ((prj (closql--remake-instance class (magit-db) row t)))
+              (oset prj apihost apihost)
+              (oset prj githost githost)
+              (oset prj remote  remote)
+              prj)
+          (and demand
+               (if-let (id (magit-forge--object-id
+                            class forge apihost owner name))
+                   (closql-insert (magit-db)
+                                  (funcall class
+                                           :id      id
+                                           :forge   forge
+                                           :owner   owner
+                                           :name    name
+                                           :apihost apihost
+                                           :githost githost
+                                           :remote  remote))
+                 (error "Cannot determine forge project.  %s"
+                        "Cannot retrieve project id")))))
+    (when demand
+      (error "Cannot determine forge project.  No entry for %S in %s"
+             host 'magit-forge-alist))))
 
 ;;; Utilities
 
