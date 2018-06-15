@@ -199,7 +199,10 @@ define set_package_requires
    "A Git porcelain inside Emacs."
    '((emacs ,emacs-version) ;'
      (async ,async-version)
+     (closql ,closql-version)
      (dash ,dash-version)
+     (emacsql ,emacsql-version)
+     (emacsql-sqlite ,emacsql-sqlite-version)
      (ghub ,ghub-version)
      (git-commit ,git-commit-version)
      (magit-popup ,magit-popup-version)
@@ -216,7 +219,10 @@ bump-versions-1:
 	@$(BATCH) --eval "(let (\
 	(emacs-version \"$(EMACS_VERSION)\")\
         (async-version \"$(ASYNC_VERSION)\")\
+        (closql-version \"$(CLOSQL_VERSION)\")\
         (dash-version \"$(DASH_VERSION)\")\
+        (emacsql-version \"$(EMACSQL_VERSION)\")\
+        (emacsql-sqlite-version \"$(EMACSQL_SQLITE_VERSION)\")\
         (ghub-version \"$(GHUB_VERSION)\")\
         (git-commit-version \"$(GIT_COMMIT_VERSION)\")\
         (magit-popup-version \"$(MAGIT_POPUP_VERSION)\")\
@@ -227,7 +233,10 @@ bump-snapshots:
 	@$(BATCH) --eval "(let (\
 	(emacs-version \"$(EMACS_VERSION)\")\
         (async-version \"$(ASYNC_MELPA_SNAPSHOT)\")\
+        (closql-version \"$(CLOSQL_MELPA_SNAPSHOT)\")\
         (dash-version \"$(DASH_MELPA_SNAPSHOT)\")\
+        (emacsql-version \"$(EMACSQL_MELPA_SNAPSHOT)\")\
+        (emacsql-sqlite-version \"$(EMACSQL_SQLITE_MELPA_SNAPSHOT)\")\
         (ghub-version \"$(GHUB_MELPA_SNAPSHOT)\")\
         (git-commit-version \"$(GIT_COMMIT_MELPA_SNAPSHOT)\")\
         (magit-popup-version \"$(MAGIT_POPUP_MELPA_SNAPSHOT)\")\
