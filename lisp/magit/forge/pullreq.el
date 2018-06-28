@@ -126,13 +126,15 @@
 (defun magit-pullreq-browse (pullreq)
   "Visit the url corresponding to PULLREQ using a browser."
   (interactive (list (magit-read-pullreq "Browse pull-request")))
-  (browse-url (magit-forge--format-url pullreq 'pullreq-url-format)))
+  (browse-url (magit-forge--format-url pullreq 'pullreq-url-format))
+  (oset pullreq unread-p nil))
 
 ;;;###autoload
 (defun magit-pullreq-visit (pullreq)
   (interactive (list (magit-read-pullreq "View pull-request")))
   (let ((magit-generate-buffer-name-function 'magit-forge-topic-buffer-name))
-    (magit-mode-setup-internal #'magit-forge-topic-mode (list pullreq) t)))
+    (magit-mode-setup-internal #'magit-forge-topic-mode (list pullreq) t))
+  (oset pullreq unread-p nil))
 
 ;;;###autoload
 (defun magit-pullreq-create ()
@@ -194,13 +196,15 @@
       (insert ?\n))))
 
 (defun magit-insert-pullreq (pullreq &optional width)
-  (with-slots (number title) pullreq
+  (with-slots (number title unread-p) pullreq
     (magit-insert-section (pullreq pullreq)
       (insert (format (if width
                           (format "%%-%is %%s\n" (1+ width))
                         "%s %s\n")
                       (propertize (format "#%s" number) 'face 'magit-dimmed)
-                      title)))))
+                      (if unread-p
+                          (propertize title 'face 'bold)
+                        title))))))
 
 ;;; _
 (provide 'magit/forge/pullreq)

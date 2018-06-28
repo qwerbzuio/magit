@@ -190,7 +190,24 @@
      (:foreign-key
       [pullreq] :references pullreq [id]
       :on-delete :cascade))
-    ))
+
+    (notification
+     [(class :not-null)
+      (id :not-null :primary-key)
+      project
+      forge
+      desc
+      reason
+      unread-p
+      last-read
+      updated
+      title
+      type
+      topic
+      ]
+     (:foreign-key
+      [project] :references project [id]
+      :on-delete :cascade))))
 
 (cl-defmethod closql--db-init ((db magit-database))
   (emacsql-with-transaction db

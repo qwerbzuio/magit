@@ -87,8 +87,7 @@ all."
     magit-insert-unpushed-to-upstream-or-recent
     magit-insert-unpushed-to-pushremote
     magit-insert-pullreqs
-    magit-insert-issues
-    )
+    magit-insert-issues)
   "Hook run to insert sections into a status buffer."
   :package-version '(magit . "2.12.0")
   :group 'magit-status

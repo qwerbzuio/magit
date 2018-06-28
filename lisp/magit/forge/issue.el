@@ -97,13 +97,15 @@
 (defun magit-issue-browse (issue)
   "Visit the url corresponding to ISSUE using a browser."
   (interactive (list (magit-read-issue "Browse issue")))
-  (browse-url (magit-forge--format-url issue 'issue-url-format)))
+  (browse-url (magit-forge--format-url issue 'issue-url-format))
+  (oset issue unread-p nil))
 
 ;;;###autoload
 (defun magit-issue-visit (issue)
   (interactive (list (magit-read-issue "View issue")))
   (let ((magit-generate-buffer-name-function 'magit-forge-topic-buffer-name))
-    (magit-mode-setup-internal #'magit-forge-topic-mode (list issue) t)))
+    (magit-mode-setup-internal #'magit-forge-topic-mode (list issue) t))
+  (oset issue unread-p nil))
 
 ;;;###autoload
 (defun magit-issue-create ()
@@ -154,13 +156,15 @@
       (insert ?\n))))
 
 (defun magit-insert-issue (issue &optional width)
-  (with-slots (number title) issue
+  (with-slots (number title unread-p) issue
     (magit-insert-section (issue issue)
       (insert (format (if width
                           (format "%%-%is %%s\n" (1+ width))
                         "%s %s\n")
                       (propertize (format "#%s" number) 'face 'magit-dimmed)
-                      title)))))
+                      (if unread-p
+                          (propertize title 'face 'bold)
+                        title))))))
 
 ;;; _
 (provide 'magit/forge/issue)

@@ -218,6 +218,7 @@ determined, then raise an error.")
 (require 'magit/forge/topic)
 (require 'magit/forge/issue)
 (require 'magit/forge/pullreq)
+(require 'magit/forge/notify)
 
 (require 'magit/forge/github)
 (require 'magit/forge/gitlab)
@@ -233,6 +234,12 @@ determined, then raise an error.")
              (magit-forge--pull-pullreqs prj)
              (magit-refresh))
     (error "Cannot determine forge project for %s" (magit-toplevel))))
+
+;;;###autoload
+(defun magit-forge-pull-notifications ()
+  (interactive)
+  ;; FIXME fetch other forges too
+  (magit-forge--pull-notifications 'magit-github-project "github.com"))
 
 ;;;###autoload
 (defun magit-forge-reset-database ()
