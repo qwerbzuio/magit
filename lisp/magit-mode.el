@@ -920,9 +920,10 @@ See also `magit-buffer-lock-functions'."
     (magit-revision-mode
      (-let [(rev __const _args files) args]
        (if files (cons rev files) (list rev))))
-    ((magit-reflog-mode   ; (ref ~args)
-      magit-stash-mode    ; (stash _const _args _files)
-      magit-stashes-mode) ; (ref)
+    ((magit-reflog-mode       ; (ref ~args)
+      magit-stash-mode        ; (stash _const _args _files)
+      magit-stashes-mode      ; (ref)
+      magit-forge-topic-mode) ; (issue)
      (car args))
     (t
      (--when-let (cdr (assq mode magit-buffer-lock-functions))

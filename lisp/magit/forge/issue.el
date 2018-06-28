@@ -99,7 +99,11 @@
   (interactive (list (magit-read-issue "Browse issue")))
   (browse-url (magit-forge--format-url issue 'issue-url-format)))
 
-(defalias 'magit-issue-visit 'magit-issue-browse)
+;;;###autoload
+(defun magit-issue-visit (issue)
+  (interactive (list (magit-read-issue "View issue")))
+  (let ((magit-generate-buffer-name-function 'magit-forge-topic-buffer-name))
+    (magit-mode-setup-internal #'magit-forge-topic-mode (list issue) t)))
 
 ;;;###autoload
 (defun magit-issue-create ()
