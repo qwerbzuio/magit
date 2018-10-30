@@ -652,8 +652,12 @@ When the region is active, then save that to the `kill-ring',
 like `kill-ring-save' would, instead of behaving as described
 above."
   (interactive)
-  (if (use-region-p)
-      (copy-region-as-kill nil nil 'region)
+  (if (region-active-p)
+      (let ((magit-diff-region-end (save-excursion
+                                     (goto-char (region-end))
+                                     (forward-line)
+                                     (point))))
+        (copy-region-as-kill (region-beginning) magit-diff-region-end))
     (-when-let (rev (cond ((memq major-mode '(magit-cherry-mode
                                               magit-log-select-mode
                                               magit-reflog-mode
