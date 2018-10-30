@@ -630,7 +630,7 @@ above."
         (t (kill-new (message "%s" value)))))))
 
 ;;;###autoload
-(defun magit-copy-buffer-revision ()
+(defun magit-copy-buffer-revision (&optional prefix-arg)
   "Save the revision of the current buffer for later use.
 
 Save the revision shown in the current buffer to the `kill-ring'
@@ -650,14 +650,41 @@ the current section instead, using `magit-copy-section-value'.
 
 When the region is active, then save that to the `kill-ring',
 like `kill-ring-save' would, instead of behaving as described
-above."
-  (interactive)
+above. With `universal-argument', remove +/- signs indicating
+added/removed lines. With positive/negative numeric argument,
+copy only added/removed lines, as well as unchanged lines."
+  (interactive "P")
   (if (region-active-p)
-      (let ((magit-diff-region-end (save-excursion
-                                     (goto-char (region-end))
-                                     (forward-line)
-                                     (point))))
-        (copy-region-as-kill (region-beginning) magit-diff-region-end))
+      (let ((filter-buffer-substring-function
+             (lambda (beg end delete)
+               (let ((result (buffer-substring beg end)))
+                 (when prefix-arg
+                   (let* ((magit-diff-sign-regexp
+                           (cond
+                            ((listp prefix-arg) "-\\|\\+")
+                            ((< (prefix-numeric-value prefix-arg) 0) "-")
+                            (t "\\+")))
+                          (magit-diff-filter-func
+                           (lambda (str)
+                             (if (listp prefix-arg) t
+                               (if (string-match-p
+                                    (format "^\\(%s\\| \\)" magit-diff-sign-regexp) str)
+                                   t
+                                 nil)))))
+                     (setq result
+                           (mapconcat
+                            (lambda (str)
+                              (replace-regexp-in-string
+                               (format "^\\(%s\\| \\)" magit-diff-sign-regexp) "" str))
+                            (-filter (apply-partially magit-diff-filter-func)
+                                     (split-string result "\n"))
+                            "\n"))))
+                 result))))
+        (let ((magit-diff-region-end (save-excursion
+                                       (goto-char (region-end))
+                                       (forward-line)
+                                       (point))))
+          (copy-region-as-kill (region-beginning) magit-diff-region-end)))
     (-when-let (rev (cond ((memq major-mode '(magit-cherry-mode
                                               magit-log-select-mode
                                               magit-reflog-mode
