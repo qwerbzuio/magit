@@ -936,7 +936,7 @@ Do not add this to a hook variable."
          (remove "--literal-pathspecs" magit-git-global-arguments)))
     (magit-git-wash (apply-partially #'magit-log-wash-log 'log)
       "log"
-      (format "--format=%%h%s%%x00%s%%x00%%aN%%x00%%at%%x00%%s%s"
+      (format "--format=%%h%s%%x00%s%%x00%%aN%%x00%%at%%x00%%s%s%%>|(1,ltrunc)%% b"
               (if (member "--decorate" args) "%d" "")
               (if (member "--show-signature" args)
                   (progn (setq args (remove "--show-signature" args)) "%G?")
