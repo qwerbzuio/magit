@@ -898,7 +898,8 @@ instead of the hash, like `kill-ring-save' would."
    ("-w" "Ignore whitespace" "-w")
    ("-r" "Do not treat root commits as boundaries" "--root")
    (magit-blame:-M)
-   (magit-blame:-C)]
+   (magit-blame:-C)
+   (magit-blame:-L)]
   ["Actions"
    ("b" "Show commits adding lines" magit-blame-addition)
    ("r" "Show commits removing lines" magit-blame-removal)
@@ -923,6 +924,15 @@ instead of the hash, like `kill-ring-save' would."
   :class 'transient-option
   :argument "-C"
   :reader 'transient-read-number-N+)
+
+(defun magit-blame-read-line-range (&rest _ignored)
+  (magit-read-string "Line range"))
+
+(define-infix-argument magit-blame:-L ()
+  :description "Annotate only the given line range."
+  :class 'transient-option
+  :argument "-L"
+  :reader 'magit-blame-read-line-range)
 
 ;;; Utilities
 
