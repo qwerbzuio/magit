@@ -1723,7 +1723,9 @@ commit or stash at point, then prompt for a commit."
             (if (eq cmd 'magit-show-commit)
                 (apply #'magit-show-commit rev (magit-show-commit--arguments))
               (funcall cmd rev))))
-      (call-interactively #'magit-show-commit))))
+      (if (magit-section-match '(unstaged file hunk))
+          (funcall fn)
+        (call-interactively #'magit-show-commit)))))
 
 ;;; Diff Mode
 
