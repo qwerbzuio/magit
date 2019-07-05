@@ -370,6 +370,22 @@ the upstream isn't ahead of the current branch) show."
       (setq magit-buffer-log-files files))
     (magit-refresh)))
 
+(defun magit-log--get-region ()
+  "Return a list with begin and end of region. Take care of corner cases.
+If region is not active, return nil."
+  (and (region-active-p)
+       (magit-file-relative-name)
+       (save-restriction
+         (widen)
+         (list (line-number-at-pos (region-beginning))
+               (line-number-at-pos
+                (let ((end (region-end)))
+                  (if (char-after end)
+                      end
+                    ;; Ensure that we don't get the line number
+                    ;; of a trailing newline.
+                    (1- end))))))))
+
 ;;; Commands
 ;;;; Prefix Commands
 
@@ -556,7 +572,10 @@ the upstream isn't ahead of the current branch) show."
 
 (defun magit-read-file-trace (&rest _ignored)
   (let ((file  (magit-read-file-from-rev "HEAD" "File"))
-        (trace (magit-read-string "Trace")))
+        (trace (magit-read-string "Trace"
+                                  (when-let ((reg (magit-log--get-region)))
+                                    (format "%s,%s"
+                                            (first reg) (second reg))))))
     (concat trace (or (match-string 2 trace) ":") file)))
 
 ;;;; Setup Commands
@@ -640,19 +659,7 @@ With a prefix argument or when `--follow' is an active log
 argument, then follow renames.  When the region is active,
 restrict the log to the lines that the region touches."
   (interactive
-   (cons current-prefix-arg
-         (and (region-active-p)
-              (magit-file-relative-name)
-              (save-restriction
-                (widen)
-                (list (line-number-at-pos (region-beginning))
-                      (line-number-at-pos
-                       (let ((end (region-end)))
-                         (if (char-after end)
-                             end
-                           ;; Ensure that we don't get the line number
-                           ;; of a trailing newline.
-                           (1- end)))))))))
+   (cons current-prefix-arg (magit-log--get-region)))
   (require 'magit)
   (if-let ((file (magit-file-relative-name)))
       (magit-log-setup-buffer
