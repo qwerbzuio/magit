@@ -741,6 +741,7 @@ of that variable can be set using \"D -- DIRECTORY RET g\"."
 If the first element of `magit-buffer-diff-files' is a
 directory, then limit the list to files below that.  The value
 of that variable can be set using \"D -- DIRECTORY RET g\"."
+  (require 'magit-git)
   (when-let ((files (magit-skip-worktree-files)))
     (let* ((base (car magit-buffer-diff-files))
            (base (and base (file-directory-p base) base)))
@@ -757,6 +758,7 @@ of that variable can be set using \"D -- DIRECTORY RET g\"."
 If the first element of `magit-buffer-diff-files' is a
 directory, then limit the list to files below that.  The value
 of that variable can be set using \"D -- DIRECTORY RET g\"."
+  (require 'magit-git)
   (when-let ((files (magit-assume-unchanged-files)))
     (let* ((base (car magit-buffer-diff-files))
            (base (and base (file-directory-p base) base)))
