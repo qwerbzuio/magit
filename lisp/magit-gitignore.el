@@ -51,11 +51,11 @@
                    (format "privately for all repositories (%s)"
                            (magit-get "core.excludesfile"))))]
   ["Skip worktree"
-   (7 "w" "do skip worktree"     magit-skip-worktree)
-   (7 "W" "do not skip worktree" magit-no-skip-worktree)]
+   ("w" "do skip worktree"     magit-skip-worktree)
+   ("W" "do not skip worktree" magit-no-skip-worktree)]
   ["Assume unchanged"
-   (7 "u" "do assume unchanged"     magit-assume-unchanged)
-   (7 "U" "do not assume unchanged" magit-no-assume-unchanged)])
+   ("u" "do assume unchanged"     magit-assume-unchanged)
+   ("U" "do not assume unchanged" magit-no-assume-unchanged)])
 
 ;;; Gitignore Commands
 
