@@ -379,7 +379,7 @@ Type \\[magit-commit] to create a commit.
          (l (magit-log--get-value  'magit-status-mode))
          (file (and magit-status-goto-file-position
                     (magit-file-relative-name)))
-         (line (and file (line-number-at-pos)))
+         (line (and file (line-number-at-pos nil t)))
          (col  (and file (current-column)))
          (buf  (magit-setup-buffer #'magit-status-mode nil
                  (magit-buffer-diff-args  (nth 0 d))
